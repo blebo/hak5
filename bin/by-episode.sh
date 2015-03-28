@@ -45,7 +45,7 @@ else
 fi
 
 # Once we have the episode chosen, now we can download it using wget. Yay!
-wget -c --directory-prefix=$DWNDIR $EPISODE
+wget -c --no-check-certificate --directory-prefix=$DWNDIR $EPISODE
 
 #find $EPISODE_LISTS -type f | read -r EPLIST
 

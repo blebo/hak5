@@ -12,5 +12,5 @@ mkdir $DWNDIR
 
 find $EPISODE_LISTS -type f | while read -r EPLIST
 do
-	wget -c --directory-prefix=$DWNDIR --input-file=$EPLIST
+	wget -c --no-check-certificate --directory-prefix=$DWNDIR --input-file=$EPLIST
 done
