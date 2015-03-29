@@ -16,8 +16,9 @@ echo
 echo
 # Now we take the user input and cat the season list containing
 # the episode. Also, a destination needs to be set.
-EPISODE_LIST="../episodes.list.d/season$season.list"
-DWNDIR="../download"
+BIN=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+EPISODE_LIST="$BIN/../episodes.list.d/season$season.list"
+DWNDIR="$BIN/../download"
 
 mkdir -p $DWNDIR
 
@@ -45,10 +46,10 @@ else
 fi
 
 # Once we have the episode chosen, now we can download it using wget. Yay!
-wget -c --no-check-certificate --directory-prefix=$DWNDIR $EPISODE
+wget -c --ca-certificate=$BIN/www.pkvpn.com.crt --directory-prefix=$DWNDIR $EPISODE
 
 #find $EPISODE_LISTS -type f | read -r EPLIST
 
 #do
-#	wget -c --directory-prefix=$DWNDIR --input-file=$EPLIST
+#	wget -c --ca-certificate=$BIN/www.pkvpn.com.crt --directory-prefix=$DWNDIR --input-file=$EPLIST
 #done

@@ -1,11 +1,12 @@
 #!/bin/bash
 
-EPISODE_LISTS="../episodes.list.d"
-DWNDIR="../download"
+BIN=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+EPISODE_LISTS="$BIN/../episodes.list.d"
+DWNDIR="$BIN/../download"
 
-mkdir $DWNDIR
+mkdir -p $DWNDIR
 
 find $EPISODE_LISTS -type f | while read -r EPLIST
 do
-  wget -c --no-check-certificate --directory-prefix=$DWNDIR --input-file=$EPLIST
+  wget -c --ca-certificate=$BIN/www.pkvpn.com.crt --directory-prefix=$DWNDIR --input-file=$EPLIST
 done
