@@ -6,7 +6,7 @@ DWNDIR="$BIN/../download"
 
 mkdir -p $DWNDIR
 
-find $EPISODE_LISTS -type f | while read -r EPLIST
+find $EPISODE_LISTS -type f -name "*.list" | while read -r EPLIST
 do
   wget -c --ca-certificate=$BIN/www.pkvpn.com.crt --directory-prefix=$DWNDIR --input-file=$EPLIST
 done
