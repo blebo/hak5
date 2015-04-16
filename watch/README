@@ -1,0 +1,57 @@
+
+
+Watch Hak5 on the commandline
+
+Idea borrowed from BitBastelei/Adlerweb =>
+https://www.youtube.com/watch?v=1SuLSWwjtgI
+http://adlerweb.info/blog/
+
+
+#### TODO ####
+
+Look into audio over ssh
+Figure out which mplayer I should be using
+Figure out how to get libaa to work, currently only libcaca works
+Have the watch-hak5 script download file if not already downloaded and start playing as if it was being streamed, currently only works on pre-downloaded files
+
+
+#### PACKAGES ####
+
+mplayer
+mplayer2
+mpv
+# https://en.wikipedia.org/wiki/MPlayer
+# https://github.com/mpv-player/mpv/blob/master/DOCS/mplayer-changes.rst
+
+libaa1
+libaa-bin
+libxine2-console
+caca-utils
+# apt-cache search libaa
+# apt-cache search libcaca
+
+paprefs
+# https://askubuntu.com/questions/371687/how-to-carry-audio-over-ssh
+
+
+#### SETUP ####
+
+sudo apt-get install mplayer2 caca-utils
+
+# dpkg -L mpv mplayer2 mplayer
+# mplayer and mplayer2 both use a binary named "/usr/bin/mplayer" and thus cannot be installed together
+# mplayer2 and mpv can be installed together, but you only need one
+
+
+#### RUN ####
+
+file='../download/season18/hak5--1806--wifi-auditing-and-pollution-monitoring--hd720p30.h264.mp4'
+mplayer   -vo caca -quiet $file
+mplayer2  -vo caca -quiet $file
+mpv      --vo=caca -quiet $file
+
+# -vo caca => multicolor
+# -vo aa   => single color (the default color of your terminal. likely white, maybe black, it was green in BitBastelei's video)
+
+mplayer -vo aa -quiet ../download/season18/hak5--1806--wifi-auditing-and-pollution-monitoring--hd720p30.h264.mp4
+

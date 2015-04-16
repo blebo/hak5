@@ -1,0 +1,17 @@
+#!/bin/bash
+
+BIN=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+EPISODE_LISTS="$BIN/../episodes.list.d"
+DWNDIR="$BIN/../download"
+
+mkdir -p $DWNDIR
+
+#cd $EPISODE_LISTS
+#file=`basename $(grep -i $1 *.list | head -1)`
+#file=`find $DWNDIR -name $file`
+#echo $file
+
+file=`find $DWNDIR -type f -iname "*$1*" -print -quit`
+
+mplayer -vo caca -quiet $file
+
