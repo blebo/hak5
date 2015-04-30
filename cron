@@ -1,6 +1,0 @@
-#!/bin/bash
-
-cat << EOF | crontab -
-0 */6 * * * /storage/video/podcasts/Hak5/scripts/weekly.sh
-0 */6 * * * /storage/video/podcasts/Hak5/scripts/daily.sh
-EOF

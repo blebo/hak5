@@ -2,9 +2,9 @@
 
 BIN=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 EPISODE_LISTS="$BIN/../episodes.list.d"
-DWNDIR="$BIN/../download"
+DWNDIR="$BIN/../.."
 
-mkdir -p $DWNDIR
+#mkdir -p $DWNDIR
 
 #cd $EPISODE_LISTS
 #file=`basename $(grep -i $1 *.list | head -1)`

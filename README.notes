@@ -1,0 +1,24 @@
+
+sudo apt-get install libconfig-simple-perl
+
+=RIGHT(D2,LEN(D2)-FIND("|",SUBSTITUTE(D2,"/","|",LEN(D2)-LEN(SUBSTITUTE(D2,"/","")))))
+
+cut -f4 ../code/episodes.list.d/Metasploit_Minute.csv | tail -n +2 | xargs -n 1 youtube-dl
+
+Season (Which subfolder to put file in, "." for show's root folder, ".." for downloads folder root.)
+Filename (Revision3 messed up some filenames, this column is used to fix that)
+Download Name (Filename that the downloader spit out, useful when downloading from youtube)
+Download Link
+MD5
+SHA256
+
+cut -f3 ../code/episodes.list.d/Metasploit_Minute.csv | tail -n +2 | perl -e '$i=0;while(<>){chomp;$i++;$iz=sprintf("%04d",$i);$m=lc(substr($_,0,index($_," -")));$m=~s/ /-/g;$m=~s/,//g;$m=~s/-tltqfovqicg.mp//g;$m=~s/-85tbguij620.mp//g;print "metasploit-minute--$iz--$m.mp4\n"}'
+
+use Getopt::Long;
+my $data   = "file.dat";
+my $length = 24;
+my $verbose;
+GetOptions ("length=i" => \$length,    # numeric
+            "file=s"   => \$data,      # string
+            "verbose"  => \$verbose)   # flag
+or die("Error in command line arguments\n");

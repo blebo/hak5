@@ -1,0 +1,109 @@
+#!/usr/bin/env perl
+
+#
+# Usage:
+# perl hak5-download --show Metasploit_Minute --episode 34
+#
+
+use strict;
+use warnings;
+use Cwd 'abs_path';
+use Config::Simple;
+use Getopt::Long;
+use File::Basename;
+use File::Path qw(make_path);
+use File::Find;
+use File::Copy;
+use Data::Dumper qw(Dumper);
+
+
+#### Get basic info
+my $code_dir        = abs_path($0);
+   $code_dir        = dirname($code_dir);
+   $code_dir        = dirname($code_dir);
+
+my $cfg             = new Config::Simple("$code_dir/hak5-download.cfg");
+my $download_dir    = $cfg->param('Download_Directory');
+my $use_show_dir    = $cfg->param('Use_Show_Directory');
+my $use_show_subdir = $cfg->param('Use_Show_Subdirectories');
+
+my $show    = "";
+my $episode = "";
+GetOptions ("show=s"    => \$show,
+            "episode=s" => \$episode)
+or die("Error in command line arguments\n");
+
+#print	"$code_dir\n",
+#	"$download_dir\n",
+#	"$use_show_dir\n",
+#	"$use_show_subdir\n",
+#	"$show\n",
+#	"$episode\n";
+
+### Which shows are we working with
+my $glob = "$code_dir";
+   $glob =~ s/([^a-zA-Z0-9_.\/])/\\$1/g;
+   $glob = "$glob/episodes.list.d/$show*.csv";
+my @csv  = glob($glob);
+for my $csv (@csv) {
+	my $show_name = basename($csv, ".csv");
+	
+	open IN, "<", $csv or die $!;
+	<IN>;
+	while(<IN>) {
+		### Which files are we working with
+		next unless(/$episode/);
+		
+		chomp;
+		my @a = split(/\t/, $_);
+		
+		my $subdir = $a[0];
+		my $file   = $a[1];
+		my $alt    = $a[2];
+		my $down   = $a[3];
+		
+		my $loc    = "$download_dir";
+		   $loc    = "$loc/$show_name" if($use_show_dir);
+		   $loc    = "$loc/$subdir"    if($use_show_subdir);
+		   $loc    = "$loc/$file";
+		   
+		my $dir    = dirname $loc;
+		
+		make_path($dir);
+		
+		### Do we already have the files
+		my @find_loc;
+		File::Find::find( sub { push @find_loc, $File::Find::name if(/(?:$file)|(?:$alt)/) }, ($code_dir, $download_dir));
+		
+		#print "@find_loc\n";
+		
+		### Wait, we have more than one copy of the file?!
+		warn @find_loc if(scalar @find_loc > 1);
+		
+		if(scalar @find_loc == 0) {
+			### Download the file
+			if($down =~ /youtube\.com/) {
+				!system("youtube-dl", "-o", "$dir/%(title)s-%(id)s.%(ext)s", "$down") or die $!;
+			} else {
+				!system("wget", "-c", "--ca-certificate=$code_dir/bin/www.pkvpn.com.crt", "--directory-prefix=$dir", "$down") or die $!;
+			}
+			
+			### Rename file if needed
+			if($alt ne $file) {
+				move("$dir/$alt", "$dir/$file") or die $!;
+			}
+			
+		} elsif( $find_loc[0] ne $loc) {
+			### We have the file, but we need to move it to the correct place
+			move($find_loc[0],   $loc) or die $!;
+			
+		} else {
+			### We have the file, do nothing
+			
+		}
+	}
+	close IN;
+}
+
+
+
