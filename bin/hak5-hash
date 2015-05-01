@@ -5,6 +5,7 @@
 # perl hak5-hash --check
 # perl hak5-hash --check --md5
 # perl hak5-hash --check --sha256 --remove
+# perl hak5-hash --check --threads 8
 #
 # Advanced Usage:
 # perl hak5-hash --make
@@ -13,6 +14,7 @@
 use strict;
 use warnings;
 use threads;
+use Thread::Semaphore;
 use Cwd 'abs_path';
 use Config::Simple;
 use Getopt::Long;
@@ -35,16 +37,18 @@ my $download_dir    = $cfg->param('Download_Directory');
 my $use_show_dir    = $cfg->param('Use_Show_Directory');
 my $use_show_subdir = $cfg->param('Use_Show_Subdirectories');
 
-my $make      = 0;
-my $check     = 0;
-my $remove    = 0;
-my $do_md5    = 0;
-my $do_sha256 = 0;
-GetOptions ("make"   => \$make,
-            "check"  => \$check,
-            "remove" => \$remove,
-            "md5"    => \$do_md5,
-            "sha256" => \$do_sha256)
+my $make        = 0;
+my $check       = 0;
+my $remove      = 0;
+my $do_md5      = 0;
+my $do_sha256   = 0;
+my $max_threads = 8;
+GetOptions ("make"    => \$make,
+            "check"   => \$check,
+            "remove"  => \$remove,
+            "md5"     => \$do_md5,
+            "sha256"  => \$do_sha256,
+            "threads" => \$max_threads)
 or die("Error in command line arguments\n");
 
 $do_md5 = $do_sha256 = 1 if(!$do_md5 and !$do_sha256);
@@ -55,11 +59,13 @@ my $glob = "$code_dir";
 my @csv  = glob($glob);
 
 my @threads;
+my $sem = Thread::Semaphore->new($max_threads);
 
 
 #### Make Hashes
 if($make) {
 	for my $csv (@csv) {
+		$sem->down;
 		push @threads, threads->create(\&make_hashes, $csv);
 	}
 }
@@ -88,7 +94,7 @@ sub make_hashes {
 	
 	move("$csv.out", $csv) or die $!;
 	
-	threads->exit();
+	$sem->up;
 }
 
 
@@ -103,10 +109,12 @@ if($check) {
 			my ($subdir, $file, $alt, $down, $md5, $sha256, $loc, $dir) = &csv_parse($show_name, $_);
 			
 			if($do_md5 and $md5 ne "" and -e $loc) {
+				$sem->down;
 				push @threads, threads->create(\&md5_check,    $loc, $md5,    $file);
 			}
 			
 			if($do_sha256 and $sha256 ne "" and -e $loc) {
+				$sem->down;
 				push @threads, threads->create(\&sha256_check, $loc, $sha256, $file);
 			}
 		}
@@ -126,7 +134,7 @@ sub md5_check {
 		}
 	}
 	
-	threads->exit();
+	$sem->up;
 }
 
 sub sha256_check {
@@ -141,7 +149,7 @@ sub sha256_check {
 		}
 	}
 	
-	threads->exit();
+	$sem->up;
 }
 
 
