@@ -1,0 +1,208 @@
+#!/usr/bin/env perl
+
+#
+# Usage:
+# perl hak5-hash --check
+# perl hak5-hash --check --md5
+# perl hak5-hash --check --sha256 --remove
+#
+# Advanced Usage:
+# perl hak5-hash --make
+#
+
+use strict;
+use warnings;
+use threads;
+use Cwd 'abs_path';
+use Config::Simple;
+use Getopt::Long;
+use File::Basename;
+use File::Path qw(make_path);
+use File::Find;
+use File::Copy;
+use Digest::MD5;
+use Digest::SHA;
+use Data::Dumper qw(Dumper);
+
+
+#### Get basic info
+my $code_dir        = abs_path($0);
+   $code_dir        = dirname($code_dir);
+   $code_dir        = dirname($code_dir);
+
+my $cfg             = new Config::Simple("$code_dir/hak5-download.cfg");
+my $download_dir    = $cfg->param('Download_Directory');
+my $use_show_dir    = $cfg->param('Use_Show_Directory');
+my $use_show_subdir = $cfg->param('Use_Show_Subdirectories');
+
+my $make      = 0;
+my $check     = 0;
+my $remove    = 0;
+my $do_md5    = 0;
+my $do_sha256 = 0;
+GetOptions ("make"   => \$make,
+            "check"  => \$check,
+            "remove" => \$remove,
+            "md5"    => \$do_md5,
+            "sha256" => \$do_sha256)
+or die("Error in command line arguments\n");
+
+$do_md5 = $do_sha256 = 1 if(!$do_md5 and !$do_sha256);
+
+my $glob = "$code_dir";
+   $glob =~ s/([^a-zA-Z0-9_.\/])/\\$1/g;
+   $glob = "$glob/episodes.list.d/*.csv";
+my @csv  = glob($glob);
+
+my @threads;
+
+
+#### Make Hashes
+if($make) {
+	for my $csv (@csv) {
+		push @threads, threads->create(\&make_hashes, $csv);
+	}
+}
+
+sub make_hashes {
+	my $csv = $_[0];
+	
+	my $show_name = basename($csv, ".csv");
+	
+	open OUT, ">", "$csv.out" or die $!;
+	open IN,  "<",  $csv      or die $!;
+	
+	my $header = <IN>;
+	print OUT $header;
+	
+	while(<IN>) {
+		my ($subdir, $file, $alt, $down, $md5, $sha256, $loc, $dir) = &csv_parse($show_name, $_);
+		
+		$md5    = &md5sum   ($loc) if($do_md5    and $md5    eq "" and -e $loc);
+		$sha256 = &sha256sum($loc) if($do_sha256 and $sha256 eq "" and -e $loc);
+		
+		print OUT "$subdir\t$file\t$alt\t$down\t$md5\t$sha256\n";
+	}
+	close IN;
+	close OUT;
+	
+	move("$csv.out", $csv) or die $!;
+	
+	threads->exit();
+}
+
+
+#### Check Hashes
+if($check) {
+	for my $csv (@csv) {
+		my $show_name = basename($csv, ".csv");
+		
+		open IN,  "<",  $csv      or die $!;
+		<IN>;
+		while(<IN>) {
+			my ($subdir, $file, $alt, $down, $md5, $sha256, $loc, $dir) = &csv_parse($show_name, $_);
+			
+			if($do_md5 and $md5 ne "" and -e $loc) {
+				push @threads, threads->create(\&md5_check,    $loc, $md5,    $file);
+			}
+			
+			if($do_sha256 and $sha256 ne "" and -e $loc) {
+				push @threads, threads->create(\&sha256_check, $loc, $sha256, $file);
+			}
+		}
+		close IN;
+	}
+}
+
+sub md5_check {
+	my ($loc, $md5, $file) = @_;
+	
+	my $digest = &md5sum($loc);
+	
+	if($md5 ne $digest) {
+		print "$file doesn't match MD5\n$md5\n$digest\n";
+		if($remove) {
+			unlink($loc) or die $!;
+		}
+	}
+	
+	threads->exit();
+}
+
+sub sha256_check {
+	my ($loc, $sha256, $file) = @_;
+	
+	my $digest = &sha256sum($loc);
+	
+	if($sha256 ne $digest) {
+		print "$file doesn't match SHA256\n$sha256\n$digest\n";
+		if($remove) {
+			unlink($loc) or die $!;
+		}
+	}
+	
+	threads->exit();
+}
+
+
+#### Threads Work
+for(@threads) {
+	$_->join();
+}
+
+
+#### Hash Methods
+sub md5sum {
+	my $loc = $_[0];
+	
+	open my $file_fh, "<", $loc or die $!;
+	
+	my $md5sum = Digest::MD5->new;
+	   $md5sum->addfile($file_fh);
+	my $digest = $md5sum->hexdigest;
+	
+	close $file_fh;
+	
+	return $digest;
+}
+
+sub sha256sum {
+	my $loc = $_[0];
+	
+	open my $file_fh, "<", $loc or die $!;
+	
+	my $sha256sum = Digest::SHA->new(256);
+	   $sha256sum->addfile($file_fh);
+	my $digest    = $sha256sum->hexdigest;
+	
+	close $file_fh;
+	
+	return $digest;
+}
+
+
+#### Parse CSV file
+sub csv_parse {
+	my ($show_name, $line) = @_;
+	
+	chomp($line);
+	my @a = split(/\t/, $line);
+	
+	my $subdir = $a[0];
+	my $file   = $a[1];
+	my $alt    = $a[2];
+	my $down   = $a[3];
+	my $md5    = $a[4];
+	my $sha256 = $a[5];
+	
+	my $loc    = "$download_dir";
+	   $loc    = "$loc/$show_name" if($use_show_dir);
+	   $loc    = "$loc/$subdir"    if($use_show_subdir);
+	   $loc    = "$loc/$file";
+	   
+	my $dir    = dirname $loc;
+	
+	return ($subdir, $file, $alt, $down, $md5, $sha256, $loc, $dir);
+}
+
+
