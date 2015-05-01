@@ -1,9 +1,21 @@
 
 sudo apt-get install libconfig-simple-perl
 
-=RIGHT(D2,LEN(D2)-FIND("|",SUBSTITUTE(D2,"/","|",LEN(D2)-LEN(SUBSTITUTE(D2,"/","")))))
 
 cut -f4 ../code/episodes.list.d/Metasploit_Minute.csv | tail -n +2 | xargs -n 1 youtube-dl
+cut -f4 ../code/episodes.list.d/Threat_Wire.csv | tail -n +2 | xargs -n 1 youtube-dl
+
+cut -f4 ../code/episodes.list.d/Pineapple_University.csv | tail -n +2 | cut -d= -f2 | perl -ne 'chomp; @a=`ls -1`; for my $a(@a){print $a if($a =~ /$_/)}'
+cut -f4 ../code/episodes.list.d/Threat_Wire.csv | tail -n +2 | cut -d= -f2 | perl -ne 'chomp; @a=`ls -1`; for my $a(@a){print $a if($a =~ /$_/)}'
+
+cut -f3 ../code/episodes.list.d/Metasploit_Minute.csv    | tail -n +2 | perl -e '$i=0;while(<>){chomp;$i++;$iz=sprintf("%04d",$i);$m=lc(substr($_,0,index($_," -")));                                                  $m=~s/ /-/g;$m=~s/,//g; $m=~s/-tltqfovqicg.mp//g;      $m=~s/-85tbguij620.mp//g; print "metasploit-minute--$iz--$m.mp4\n"}'
+cut -f3 ../code/episodes.list.d/Pineapple_University.csv | tail -n +2 | perl -e '$i=0;while(<>){chomp;$i++;$iz=sprintf("%04d",$i);$m=lc(substr($_,0,index($_," - Pineapple University"))); $m=~s/ - WiFi Pineapple//g; $m=~s/ /-/g;$m=~s/,//g; $m=~s/\(|\)//g;$m=~s/\[|\]//g; $m=~s/-tyzbpnslnnw.mp//g; print "pineapple-university--$iz--$m.mp4\n"}'
+cut -f3 ../code/episodes.list.d/Threat_Wire.csv          | tail -n +2 | perl -e '$i=0;while(<>){chomp;$i++;$iz=sprintf("%04d",$i);$m=lc(substr($_,0,index($_," - Threat Wire")));                                      $m=~s/ /-/g;$m=~s/,//g; $m=~s/\(|\)//g; $m=~s/\[|\]//g;                          print "threat-wire--$iz--$m.mp4\n"}'
+
+
+=RIGHT(D2,LEN(D2)-FIND("|",SUBSTITUTE(D2,"/","|",LEN(D2)-LEN(SUBSTITUTE(D2,"/","")))))
+
+
 
 Season (Which subfolder to put file in, "." for show's root folder, ".." for downloads folder root.)
 Filename (Revision3 messed up some filenames, this column is used to fix that)
@@ -12,7 +24,6 @@ Download Link
 MD5
 SHA256
 
-cut -f3 ../code/episodes.list.d/Metasploit_Minute.csv | tail -n +2 | perl -e '$i=0;while(<>){chomp;$i++;$iz=sprintf("%04d",$i);$m=lc(substr($_,0,index($_," -")));$m=~s/ /-/g;$m=~s/,//g;$m=~s/-tltqfovqicg.mp//g;$m=~s/-85tbguij620.mp//g;print "metasploit-minute--$iz--$m.mp4\n"}'
 
 use Getopt::Long;
 my $data   = "file.dat";
@@ -22,3 +33,25 @@ GetOptions ("length=i" => \$length,    # numeric
             "file=s"   => \$data,      # string
             "verbose"  => \$verbose)   # flag
 or die("Error in command line arguments\n");
+
+http://anarchivism.org/w/Save_Rev3
+q=hd720p30.h264.mp4; i=avtalk; wget -c -i -- `curl "http://revision3.com/shows/$i/episodePage?&limit=1000" | grep -i $i-- | sed 's%^.*src="%%' | sed 's%images/shows%web%' | sed 's%medium.thumb.jpg".*%'$q'%'`
+q=hd720p30.h264.mp4; i=threatwire; curl "http://revision3.com/shows/$i/episodePage?&limit=1000" | grep -i $i-- | sed 's%^.*src="%%' | sed 's%images/shows%web%' | sed 's%medium.thumb.jpg".*%'$q'%' | grep -v jpg
+
+http://revision3.com/shows/threatwire/episodePage?&limit=1000
+
+q=hd720p30.h264.mp4
+i=threatwire
+curl "http://revision3.com/shows/$i/episodePage?&limit=1000" | \
+grep -i $i--                      | \
+sed 's%^.*src="%%'                | \
+sed 's%images/shows%web%'         | \
+sed 's%medium.thumb.jpg".*%'$q'%' | \
+grep -v jpg
+
+
+i=threatwire; curl "https://www.youtube.com/playlist?list=PLuiBx681uVklFWI27911j4MktfxAcNZSb" | grep -i $i-- 
+
+curl "https://www.youtube.com/playlist?list=PLuiBx681uVklFWI27911j4MktfxAcNZSb" > tmp
+cat tmp | grep data-video-id | sed 's/.*data-video-ids="\(...........\)".*/\1/' | grep -v "<" | uniq | sed 's#\(.*\)#https://www.youtube.com/watch?v=\1#' | tac
+

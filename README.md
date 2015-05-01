@@ -14,16 +14,20 @@ We will see if that works out.
 ### Install
 
 The program will probably only work on a Linux machine, but you can try on Windows or Mac if you want~
+
 You will need Perl.
 
 ##### Ubuntu
 `sudo apt-get install youtube-dl libconfig-simple-perl`
 ##### Fedora
 `sudo yum install youtube-dl perl-Config-Simple`
-
+##### Both
 `mkdir -p /storage/video/podcasts/Hak5` (Or whatever...)
+
 `cd       /storage/video/podcasts/Hak5`
+
 `git   clone https://github.com/nateinu/hak5`
+
 `mv    hak5 code`
 
 
@@ -33,7 +37,9 @@ You will need Perl.
 Edit the hak5-download.cfg-example file.
 
 `cd /storage/video/podcasts/Hak5/code` (Or whatever...)
+
 `cp hak5-download.cfg-example hak5-download.cfg`
+
 `vim hak5-download.cfg`
 
 Set the download folder and which levels of subfolders you want.
