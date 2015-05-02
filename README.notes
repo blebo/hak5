@@ -55,3 +55,20 @@ i=threatwire; curl "https://www.youtube.com/playlist?list=PLuiBx681uVklFWI27911j
 curl "https://www.youtube.com/playlist?list=PLuiBx681uVklFWI27911j4MktfxAcNZSb" > tmp
 cat tmp | grep data-video-id | sed 's/.*data-video-ids="\(...........\)".*/\1/' | grep -v "<" | uniq | sed 's#\(.*\)#https://www.youtube.com/watch?v=\1#' | tac
 
+
+Revision3	Hak5
+Revision3	HakTip
+Youtube		Metasploit_Minute
+Youtube		Pineapple_University
+PodBean		TekThing
+Youtube		Threat_Wire
+
+
+q=hd720p30.h264.mp4; i=hak5;   curl "http://revision3.com/shows/$i/episodePage?&limit=1000" | grep -i $i-- | sed 's%^.*src="%%' | sed 's%images/shows%web%' | sed 's%medium.thumb.jpg".*%'$q'%' | grep -v jpg | tac
+q=hd720p30.h264.mp4; i=haktip; curl "http://revision3.com/shows/$i/episodePage?&limit=1000" | grep -i $i-- | sed 's%^.*src="%%' | sed 's%images/shows%web%' | sed 's%medium.thumb.jpg".*%'$q'%' | grep -v jpg | tac
+curl "https://www.youtube.com/playlist?list=PLW5y1tjAOzI3n4KRN_ic8N8Qv_ss_dh_F"  | grep data-video-id | sed 's/.*data-video-ids="\(...........\)".*/\1/' | grep -v "<" | uniq | sed 's#\(.*\)#https://www.youtube.com/watch?v=\1#' | tac
+curl "https://www.youtube.com/playlist?list=PLW5y1tjAOzI1benBAgqAbMExp5dWkQLgO"  | grep data-video-id | sed 's/.*data-video-ids="\(...........\)".*/\1/' | grep -v "<" | uniq | sed 's#\(.*\)#https://www.youtube.com/watch?v=\1#' | tac
+curl "http://feeds.feedburner.com/tekthing" | grep "http://tekthing.podbean.com/" | sed 's/.*url=\"\(.*mp4\)\".*/\1/' | grep -v "<" | tac
+curl "https://www.youtube.com/playlist?list=PLW5y1tjAOzI0Sx4UU2fncEwQ9BQLr5Vlu"  | grep data-video-id | sed 's/.*data-video-ids="\(...........\)".*/\1/' | grep -v "<" | uniq | sed 's#\(.*\)#https://www.youtube.com/watch?v=\1#' | tac
+
+

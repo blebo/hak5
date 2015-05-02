@@ -1,0 +1,132 @@
+#!/usr/bin/env perl
+
+#
+# Usage:
+# perl hak5-getlinks
+#
+
+use strict;
+use warnings;
+use Cwd 'abs_path';
+use Config::Simple;
+use Getopt::Long;
+use File::Basename;
+use File::Path qw(make_path);
+use File::Find;
+use File::Copy;
+use List::MoreUtils qw/ uniq /;
+use LWP::UserAgent;
+use HTTP::Request::Common qw(GET);
+use Data::Dumper qw(Dumper);
+
+my $ua = LWP::UserAgent->new;
+   $ua->agent('Mozilla/8.0');
+
+
+#### Get basic info
+my $code_dir        = abs_path($0);
+   $code_dir        = dirname($code_dir);
+   $code_dir        = dirname($code_dir);
+
+my $glob = "$code_dir";
+   $glob =~ s/([^a-zA-Z0-9_.\/])/\\$1/g;
+   $glob = "$glob/episodes.list.d/*.csv";
+my @csv  = glob($glob);
+
+my $max_links = 10;
+
+#### Get links
+my %links;
+
+$links{"Hak5"}                 = &revision3_links("hak5");
+$links{"HakTip"}               = &revision3_links("haktip");
+$links{"Metasploit_Minute"}    =   &youtube_links("PLW5y1tjAOzI3n4KRN_ic8N8Qv_ss_dh_F");
+$links{"Pineapple_University"} =   &youtube_links("PLW5y1tjAOzI1benBAgqAbMExp5dWkQLgO");
+$links{"TekThing"}             =   &podbean_links("tekthing");
+$links{"Threat_Wire"}          =   &youtube_links("PLW5y1tjAOzI0Sx4UU2fncEwQ9BQLr5Vlu");
+
+
+#### Web Methods
+sub revision3_links {
+	my $show     = $_[0];
+	
+	my $uri      = "http://revision3.com/shows/$show/episodePage?&limit=$max_links";
+	my $res      = $ua->request(GET $uri);
+	my @content  = split(/\n/, $res->content);
+	
+	   @content  = grep { /$show--/ }              @content ;
+	s%^.*src="%%                               for(@content);
+	s%images/shows%web%                        for(@content);
+	s%medium.thumb.jpg".*%hd720p30.h264.mp4%   for(@content);
+	   @content  = grep { !/jpg/ }                 @content ;
+	   @content  = reverse                         @content ;
+	
+	return \@content;
+}
+sub youtube_links {
+	my $playlist = $_[0];
+	
+	my $uri      = "https://www.youtube.com/playlist?list=$playlist";
+	my $res      = $ua->request(GET $uri);
+	my @content  = split(/\n/, $res->content);
+	
+	   @content  = grep { /data-video-id/ }        @content ;
+	s#.*data-video-ids="(...........)".*#$1#   for(@content);
+	   @content  = grep { !/</ }                   @content ;
+	   @content  = uniq                            @content ;
+	s#(.*)#https://www.youtube.com/watch?v=$1# for(@content);
+	my $max      = ($#content > $max_links) ? $max_links : $#content;
+	   @content  =                                 @content[0..$max];
+	   @content  = reverse                         @content ;
+	
+	return \@content;
+}
+sub podbean_links {
+	$"="\n\n";
+	my $show     = $_[0];
+	
+	my $uri      = "http://$show.podbean.com/feed/";
+	my $res      = $ua->request(GET $uri);
+	my @content  = split(/\n/, $res->content);
+	
+	   @content  = grep { /enclosure url/ }        @content ;
+	s#.*url="(.*?)".*#$1#                      for(@content);
+	   @content  = grep { /mp4/ }                  @content ;
+	s#feed#web#                                for(@content);
+	my $max      = ($#content > $max_links) ? $max_links : $#content;
+	   @content  =                                 @content[0..$max];
+	   @content  = reverse                         @content ;
+	
+	return \@content;
+}
+
+
+#### See if we already have those links
+for my $csv (@csv) {
+	my $show_name = basename($csv, ".csv");
+	next if($show_name eq "Specials");
+	$"="\n";
+	print	"\n$show_name\n";
+	
+	my %have_link;
+	
+	open IN, "<", $csv or die $!;
+	<IN>;
+	while(<IN>) {
+		chomp;
+		my @a = split(/\t/, $_);
+		
+		$have_link{$a[3]} = 0;
+	}
+	close IN;
+	
+	my @new_link = @{$links{$show_name}};
+	print	"ALL\n",
+			"@new_link\n";
+	
+	print	"NEW\n";
+	for my $new_link (@new_link) {
+		print "$new_link\n" unless(exists $have_link{$new_link});
+	}
+}
+
