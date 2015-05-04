@@ -1,17 +1,88 @@
-#!/bin/bash
+#!/usr/bin/env perl
 
-BIN=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-EPISODE_LISTS="$BIN/../episodes.list.d"
-DWNDIR="$BIN/../.."
+#
+# Needed Packages: Client
+# socat
+#
+# Needed Packages: Server
+# vlc libaa1-dev libcaca-dev
+#
+# Usage:
+# socat TCP-LISTEN:22255,fork UNIX-CONNECT:$(pax11publish | awk -F ":" '{print $3; exit}') &
+# ssh -R 22255:localhost:22255 <user>@<server>
+# perl hak5-watch --show Metasploit_Minute --episode 34
+#
 
-#mkdir -p $DWNDIR
+use strict;
+use warnings;
+use Cwd 'abs_path';
+use Config::Simple;
+use Getopt::Long;
+use File::Basename;
 
-#cd $EPISODE_LISTS
-#file=`basename $(grep -i $1 *.list | head -1)`
-#file=`find $DWNDIR -name $file`
-#echo $file
 
-file=`find $DWNDIR -type f -iname "*$1*" -print -quit`
+#### Get basic info
+my $code_dir        = abs_path($0);
+   $code_dir        = dirname($code_dir);
+   $code_dir        = dirname($code_dir);
 
-mplayer -vo caca -quiet $file
+my $cfg             = new Config::Simple("$code_dir/hak5-download.cfg");
+my $download_dir    = $cfg->param('Download_Directory');
+my $use_show_dir    = $cfg->param('Use_Show_Directory');
+my $use_show_subdir = $cfg->param('Use_Show_Subdirectories');
+
+my $show    = "";
+my $episode = "";
+my $color   = 0;
+GetOptions ("show=s"    => \$show,
+            "episode=s" => \$episode,
+            "color"     => \$color)
+or die("Error in command line arguments\n");
+
+### Which shows are we working with
+my $glob = "$code_dir";
+   $glob =~ s/([^a-zA-Z0-9_.\/])/\\$1/g;
+   $glob = "$glob/episodes.list.d/$show*.csv";
+
+my @csv  = glob($glob);
+
+for my $csv (@csv) {
+	my $show_name = basename($csv, ".csv");
+	
+	open IN, "<", $csv or die $!;
+	<IN>;
+	while(<IN>) {
+		### Which files are we working with
+		next unless(/$episode/);
+		
+		chomp;
+		my @a = split(/\t/, $_);
+		
+		my $subdir = $a[0];
+		my $file   = $a[1];
+		
+		my $loc    = "$download_dir";
+		   $loc    = "$loc/$show_name" if($use_show_dir);
+		   $loc    = "$loc/$subdir"    if($use_show_subdir);
+		   $loc    = "$loc/$file";
+		
+		unless(-e $loc) {
+			!system("$code_dir/bin/hak5-download", "--show", $show, "--episode", $episode) or die $!;
+		}
+		
+		my $vout = ($color) ? "caca" : "aa";
+		
+		$ENV{PULSE_SERVER} = "tcp:localhost:22255";
+		!system("cvlc", "--aout='ab=8'", "--vout=$vout", "--no-repeat", "--no-loop", "--quiet", $loc) or die $!;
+		
+		# --aout='#transcode{ab=8}'
+		
+		last;
+	}
+	close IN;
+	
+	last;
+}
+
+
 
