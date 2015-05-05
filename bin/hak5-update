@@ -2,7 +2,7 @@
 
 #
 # Usage:
-# perl hak5-getlinks
+# perl hak5-update
 #
 
 use strict;
@@ -19,6 +19,8 @@ use LWP::UserAgent;
 use HTTP::Request::Common qw(GET);
 use Data::Dumper qw(Dumper);
 
+my $max_links = 10;
+
 my $ua = LWP::UserAgent->new;
    $ua->agent('Mozilla/8.0');
 
@@ -28,12 +30,6 @@ my $code_dir        = abs_path($0);
    $code_dir        = dirname($code_dir);
    $code_dir        = dirname($code_dir);
 
-my $glob = "$code_dir";
-   $glob =~ s/([^a-zA-Z0-9_.\/])/\\$1/g;
-   $glob = "$glob/episodes.list.d/*.csv";
-my @csv  = glob($glob);
-
-my $max_links = 10;
 
 #### Get links
 my %links;
@@ -102,13 +98,20 @@ sub podbean_links {
 
 
 #### See if we already have those links
+my $glob = "$code_dir";
+   $glob =~ s/([^a-zA-Z0-9_.\/])/\\$1/g;
+   $glob = "$glob/episodes.list.d/*.csv";
+my @csv  = glob($glob);
+
 for my $csv (@csv) {
 	my $show_name = basename($csv, ".csv");
 	next if($show_name eq "Specials");
+	
 	$"="\n";
-	print	"\n$show_name\n";
+	print	"\n$show_name\n\n";
 	
 	my %have_link;
+	my $episode = "00";
 	
 	open IN, "<", $csv or die $!;
 	<IN>;
@@ -117,16 +120,78 @@ for my $csv (@csv) {
 		my @a = split(/\t/, $_);
 		
 		$have_link{$a[3]} = 0;
+		$episode          = $1 if($a[1] =~ /\d\d(\d\d)/);
 	}
 	close IN;
 	
-	my @new_link = @{$links{$show_name}};
-	print	"ALL\n",
-			"@new_link\n";
-	
-	print	"NEW\n";
-	for my $new_link (@new_link) {
-		print "$new_link\n" unless(exists $have_link{$new_link});
+	open OUT, ">>", $csv or die $!;
+	my @link = @{$links{$show_name}};
+	for my $link (@link) {
+		next if(exists $have_link{$link});
+		
+		next if($link eq "http://videos.revision3.com/revision3/web/hak5/haktip/0135/hak5--haktip--0135--tcp-flow-control--hd720p30.h264.mp4");
+		     # Should be "http://videos.revision3.com/revision3/web/hak5/haktip/0135/hak5--haktip--0135--wireshark-101-tcp-flow-control--hd720p30.h264.mp4"
+		
+		my $yt     = ($link =~ /youtube/i) ? 1 : 0;
+		
+		my $season = "00";
+		   $season = $1 if($link =~ /(\d\d)/);
+		
+		if($season > 40 and !$yt) {
+			warn ">WARN< High Season Number: $season. SKIPPING => $link\n";
+			next;
+		
+		}
+				
+		my $subdir = ".";
+		   $subdir = "Season_$season" if($show_name eq "Hak5");
+		
+		my $file   = basename $link;
+		my $alt    = $file;
+		my $down   = $link;
+		my $md5    = "";
+		my $sha256 = "";
+		
+		if($yt) {
+			  chomp($alt = `youtube-dl --get-filename $link 2>&1`);
+			next if($alt =~ /^ERROR: YouTube said: /);
+			
+			chomp(my $id = `youtube-dl --get-id       $link`);
+			
+			$episode++;
+			$episode = sprintf("%04d", $episode);
+			
+			my $show_space =    $show_name;
+			  #$show_space =~ s/_/ /g;
+			   $show_space =~ s/_.*//g;
+			my $show_dash  = lc($show_name);
+			   $show_dash  =~ s/_/-/g;
+			
+			my $title =  substr($alt, 0, index($alt, " - $show_space"));
+			   $title =  lc($title);
+			   $title =~ s/ /-/g;
+			   $title =~ s/,//g;
+			   $title =~ s/\(|\)//g;
+			   $title =~ s/\[|\]//g;
+			   $title =~ s/ - WiFi Pineapple//g;
+			   $title =~ s/-$id.mp//ig;
+			   $title =~ s/$id//ig;
+			   $title =~ s/$show_dash//ig;
+			   $title =~ s/[^\w-]//g;
+			   $title =~ s/-+/-/g;
+			
+			$file = "$show_dash--$episode--$title.mp4";
+		}
+		
+		#print     "$subdir\t$file\t$alt\t$down\t$md5\t$sha256\n";
+		 print OUT "$subdir\t$file\t$alt\t$down\t$md5\t$sha256\n";
 	}
+	close OUT;
+	
+	!system("$code_dir/bin/hak5-download", "--show", "$show_name"          ) or die $!;
 }
+
+!system("$code_dir/bin/hak5-hash", "--make") or die $!;
+
+
 
