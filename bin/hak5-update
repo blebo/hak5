@@ -8,16 +8,13 @@
 use strict;
 use warnings;
 use Cwd 'abs_path';
-use Config::Simple;
+#use Config::Simple;
 use Getopt::Long;
 use File::Basename;
-use File::Path qw(make_path);
-use File::Find;
-use File::Copy;
-use List::MoreUtils qw/ uniq /;
+use List::MoreUtils qw(uniq);
 use LWP::UserAgent;
 use HTTP::Request::Common qw(GET);
-use Data::Dumper qw(Dumper);
+#use Data::Dumper qw(Dumper);
 
 my $max_links = 10;
 

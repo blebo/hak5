@@ -19,12 +19,10 @@ use Cwd 'abs_path';
 use Config::Simple;
 use Getopt::Long;
 use File::Basename;
-use File::Path qw(make_path);
-use File::Find;
 use File::Copy;
 use Digest::MD5;
 use Digest::SHA;
-use Data::Dumper qw(Dumper);
+#use Data::Dumper qw(Dumper);
 
 
 #### Get basic info
@@ -32,23 +30,26 @@ my $code_dir        = abs_path($0);
    $code_dir        = dirname($code_dir);
    $code_dir        = dirname($code_dir);
 
+unless(-e "$code_dir/hak5-download.cfg") {
+	move("$code_dir/hak5-download.cfg-example", "$code_dir/hak5-download.cfg") or die $!;
+}
 my $cfg             = new Config::Simple("$code_dir/hak5-download.cfg");
 my $download_dir    = $cfg->param('Download_Directory');
+   $download_dir    = "$code_dir/$download_dir" unless($download_dir =~ /^\//);
 my $use_show_dir    = $cfg->param('Use_Show_Directory');
 my $use_show_subdir = $cfg->param('Use_Show_Subdirectories');
+my $max_threads     = $cfg->param('Max_CPU_Threads');
 
 my $make        = 0;
 my $check       = 0;
 my $remove      = 0;
 my $do_md5      = 0;
 my $do_sha256   = 0;
-my $max_threads = 8;
 GetOptions ("make"    => \$make,
             "check"   => \$check,
             "remove"  => \$remove,
             "md5"     => \$do_md5,
-            "sha256"  => \$do_sha256,
-            "threads" => \$max_threads)
+            "sha256"  => \$do_sha256)
 or die("Error in command line arguments\n");
 
 $do_md5 = $do_sha256 = 1 if(!$do_md5 and !$do_sha256);
@@ -212,5 +213,6 @@ sub csv_parse {
 	
 	return ($subdir, $file, $alt, $down, $md5, $sha256, $loc, $dir);
 }
+
 
 

@@ -14,7 +14,7 @@ use File::Basename;
 use File::Path qw(make_path);
 use File::Find;
 use File::Copy;
-use Data::Dumper qw(Dumper);
+#use Data::Dumper qw(Dumper);
 
 
 #### Get basic info
@@ -22,8 +22,12 @@ my $code_dir        = abs_path($0);
    $code_dir        = dirname($code_dir);
    $code_dir        = dirname($code_dir);
 
+unless(-e "$code_dir/hak5-download.cfg") {
+	move("$code_dir/hak5-download.cfg-example", "$code_dir/hak5-download.cfg") or die $!;
+}
 my $cfg             = new Config::Simple("$code_dir/hak5-download.cfg");
 my $download_dir    = $cfg->param('Download_Directory');
+   $download_dir    = "$code_dir/$download_dir" unless($download_dir =~ /^\//);
 my $use_show_dir    = $cfg->param('Use_Show_Directory');
 my $use_show_subdir = $cfg->param('Use_Show_Subdirectories');
 
@@ -39,6 +43,7 @@ or die("Error in command line arguments\n");
 #	"$use_show_subdir\n",
 #	"$show\n",
 #	"$episode\n";
+
 
 ### Which shows are we working with
 my $glob = "$code_dir";
@@ -104,6 +109,8 @@ for my $csv (@csv) {
 	}
 	close IN;
 }
+
+!system("$code_dir/bin/hak5-hash", "--check", "--md5") or die $!;
 
 
 

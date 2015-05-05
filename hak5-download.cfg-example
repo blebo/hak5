@@ -1,3 +1,27 @@
-Download_Directory	/storage/video/podcasts/Hak5
+#### Hak5 Archiver Config File ####
+
+# Where should I download files to?
+# Can be an absolute path or a path
+# relative to the code directory.
+#Download_Directory	/storage/video/podcasts/Hak5
+Download_Directory	download
+
+# Which sub levels of directory structure
+# should I use to organize downloads?
+# None:
+# e.g. /.../download/all_the_files.mp4
+# Show Directories:
+# e.g. /.../download/Threat_Wire/all_the_files.mp4
+# Show Directories and Show Subdirectories:
+# (a.k.a. season directories)
+# e.g. /.../download/Hak5/Season_14/all_the_files.mp4
+#Use_Show_Directory	0
+#Use_Show_Subdirectories	0
 Use_Show_Directory	1
 Use_Show_Subdirectories	1
+
+# When I hash files or check file hashes,
+# how many CPU threads can I use?
+#Max_CPU_Threads	8
+Max_CPU_Threads	1
+
