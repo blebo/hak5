@@ -73,6 +73,16 @@ The "--episode" flag uses regex, not numbers. This means *crazy* things can happ
 ##### Update meta-files by scraping web
 `./bin/hak5-update`
 
+##### Download new shows weekly
+
+Add this to your crontab:
+
+`0 0 * * 0 /usr/bin/perl /home/$USER/hak5/bin/hak5-update 2>&1 >/dev/null`
+
+or
+
+`0 0 * * 0 /bin/bash -c "cd /home/$USER/hak5 ; git pull ; bin/hak5-download" 2>&1 >/dev/null`
+
 ##### Check file hashes
 `./bin/hak5-hash --check --md5`
 
