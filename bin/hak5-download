@@ -87,7 +87,7 @@ for my $csv (@csv) {
 		
 		if(scalar @find_loc == 0) {
 			### Download the file
-			if($down =~ /youtube\.com/) {
+			if($down =~ /youtube\.com/i) {
 				!system("youtube-dl", "-o", "$dir/%(title)s-%(id)s.%(ext)s", "$down") or die $!;
 			} else {
 				!system("wget", "-c", "--ca-certificate=$code_dir/bin/www.pkvpn.com.crt", "--directory-prefix=$dir", "$down") or die $!;

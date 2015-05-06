@@ -43,13 +43,15 @@ my $max_threads     = $cfg->param('Max_CPU_Threads');
 my $make        = 0;
 my $check       = 0;
 my $remove      = 0;
+my $redownload  = 0;
 my $do_md5      = 0;
 my $do_sha256   = 0;
-GetOptions ("make"    => \$make,
-            "check"   => \$check,
-            "remove"  => \$remove,
-            "md5"     => \$do_md5,
-            "sha256"  => \$do_sha256)
+GetOptions ("make"       => \$make,
+            "check"      => \$check,
+            "remove"     => \$remove,
+            "redownload" => \$redownload,
+            "md5"        => \$do_md5,
+            "sha256"     => \$do_sha256)
 or die("Error in command line arguments\n");
 
 $do_md5 = $do_sha256 = 1 if(!$do_md5 and !$do_sha256);
@@ -111,12 +113,12 @@ if($check) {
 			
 			if($do_md5 and $md5 ne "" and -e $loc) {
 				$sem->down;
-				push @threads, threads->create(\&md5_check,    $loc, $md5,    $file);
+				push @threads, threads->create(\&md5_check,    $subdir, $file, $alt, $down, $md5, $sha256, $loc, $dir);
 			}
 			
 			if($do_sha256 and $sha256 ne "" and -e $loc) {
 				$sem->down;
-				push @threads, threads->create(\&sha256_check, $loc, $sha256, $file);
+				push @threads, threads->create(\&sha256_check, $subdir, $file, $alt, $down, $md5, $sha256, $loc, $dir);
 			}
 		}
 		close IN;
@@ -124,14 +126,22 @@ if($check) {
 }
 
 sub md5_check {
-	my ($loc, $md5, $file) = @_;
+	my ($subdir, $file, $alt, $down, $md5, $sha256, $loc, $dir) = @_;
 	
 	my $digest = &md5sum($loc);
 	
 	if($md5 ne $digest) {
-		print "$file doesn't match MD5\n$md5\n$digest\n";
+		my @down_command = ("wget", "-c", "--ca-certificate=$code_dir/bin/www.pkvpn.com.crt", "--directory-prefix=$dir", "$down");
+		   @down_command = ("youtube-dl", "-o", "$dir/%(title)s-%(id)s.%(ext)s", "$down") if($down =~ /youtube\.com/i);
+		
+		print "MD5 missmatch:      $file\n";
+		print "Redownload command: @down_command\n" unless($redownload);
+		
 		if($remove) {
 			unlink($loc) or die $!;
+		}
+		if($redownload) {
+			!system(@down_command) or die $!;
 		}
 	}
 	
