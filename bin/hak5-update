@@ -186,7 +186,9 @@ for my $csv (@csv) {
 	close OUT;
 }
 
+print "\nDownloading\n\n";
 !system("$code_dir/bin/hak5-download", "--nohash") or die $!;
+print "\nHashing\n\n";
 !system("$code_dir/bin/hak5-hash",     "--make"  ) or die $!;
 
 

@@ -87,8 +87,8 @@ sub make_hashes {
 	while(<IN>) {
 		my ($subdir, $file, $alt, $down, $md5, $sha256, $loc, $dir) = &csv_parse($show_name, $_);
 		
-		$md5    = &md5sum   ($loc) if($do_md5    and $md5    eq "" and -e $loc);
-		$sha256 = &sha256sum($loc) if($do_sha256 and $sha256 eq "" and -e $loc);
+		$md5    = &md5sum   ($loc) if($do_md5    and !defined $md5    and -e $loc);
+		$sha256 = &sha256sum($loc) if($do_sha256 and !defined $sha256 and -e $loc);
 		
 		print OUT "$subdir\t$file\t$alt\t$down\t$md5\t$sha256\n";
 	}
@@ -210,12 +210,7 @@ sub csv_parse {
 	chomp($line);
 	my @a = split(/\t/, $line);
 	
-	my $subdir = $a[0];
-	my $file   = $a[1];
-	my $alt    = $a[2];
-	my $down   = $a[3];
-	my $md5    = $a[4];
-	my $sha256 = $a[5];
+	my ($subdir, $file, $alt, $down, $md5, $sha256) = @a;
 	
 	my $loc    = "$download_dir";
 	   $loc    = "$loc/$show_name" if($use_show_dir);
