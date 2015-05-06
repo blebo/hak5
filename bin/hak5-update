@@ -184,11 +184,10 @@ for my $csv (@csv) {
 		 print OUT "$subdir\t$file\t$alt\t$down\t$md5\t$sha256\n";
 	}
 	close OUT;
-	
-	!system("$code_dir/bin/hak5-download", "--show", "$show_name"          ) or die $!;
 }
 
-!system("$code_dir/bin/hak5-hash", "--make") or die $!;
+!system("$code_dir/bin/hak5-download", "--nohash") or die $!;
+!system("$code_dir/bin/hak5-hash",     "--make"  ) or die $!;
 
 
 

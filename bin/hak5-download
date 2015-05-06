@@ -33,8 +33,10 @@ my $use_show_subdir = $cfg->param('Use_Show_Subdirectories');
 
 my $show    = "";
 my $episode = "";
+my $nohash  = 0;
 GetOptions ("show=s"    => \$show,
-            "episode=s" => \$episode)
+            "episode=s" => \$episode,
+            "nohash"    => \$nohash)
 or die("Error in command line arguments\n");
 
 #print	"$code_dir\n",
@@ -112,7 +114,9 @@ for my $csv (@csv) {
 	close IN;
 }
 
-!system("$code_dir/bin/hak5-hash", "--check", "--md5") or die $!;
+unless($nohash) {
+	!system("$code_dir/bin/hak5-hash", "--check", "--md5") or die $!;
+}
 
 
 
