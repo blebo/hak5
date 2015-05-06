@@ -31,7 +31,7 @@ my $code_dir        = abs_path($0);
    $code_dir        = dirname($code_dir);
 
 unless(-e "$code_dir/hak5-download.cfg") {
-	move("$code_dir/hak5-download.cfg-example", "$code_dir/hak5-download.cfg") or die $!;
+	copy("$code_dir/hak5-download.cfg-example", "$code_dir/hak5-download.cfg") or die $!;
 }
 my $cfg             = new Config::Simple("$code_dir/hak5-download.cfg");
 my $download_dir    = $cfg->param('Download_Directory');
