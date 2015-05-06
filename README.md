@@ -78,7 +78,7 @@ The "--episode" flag uses regex, not numbers. This means *crazy* things can happ
 
 or
 
-`./bin/hak5-hash --check --sha256`
+`./bin/hak5-hash --check --sha256 --remove --redownload`
 
 ##### Make file hashes
 `./bin/hak5-hash --make`
@@ -89,13 +89,18 @@ Instructions below are tested for when client and server are running Ubuntu 14.0
 
 TODO: Figure out how to get vlc to transcode the audio to a lower bitrate on the fly.
 
+Setup
+
 ```
 sudo apt-get install socat
 socat TCP-LISTEN:22255,fork UNIX-CONNECT:$(pax11publish | awk -F ":" '{print $3; exit}') &
 ssh -R 22255:localhost:22255 <user>@<server>
 sudo apt-get install vlc libaa1-dev libcaca-dev
-./bin/hak5-watch --show Metasploit_Minute --episode 34
 ```
+
+Watch
+
+`./bin/hak5-watch --show Metasploit_Minute --episode 34`
 
 or
 
