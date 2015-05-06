@@ -103,6 +103,7 @@ sub make_hashes {
 
 #### Check Hashes
 if($check) {
+	print "\nChecking File Hashes\n\n";
 	for my $csv (@csv) {
 		my $show_name = basename($csv, ".csv");
 		
@@ -132,10 +133,12 @@ sub md5_check {
 	
 	if($md5 ne $digest) {
 		my @down_command = ("wget", "-c", "--ca-certificate=$code_dir/bin/www.pkvpn.com.crt", "--directory-prefix=$dir", "$down");
-		   @down_command = ("youtube-dl", "-o", "$dir/%(title)s-%(id)s.%(ext)s", "$down") if($down =~ /youtube\.com/i);
+		   @down_command = ("youtube-dl", "-o", "$loc", "$down") if($down =~ /youtube\.com/i);
 		
 		print "MD5 missmatch:      $file\n";
 		print "Redownload command: @down_command\n" unless($redownload);
+		print "(These things happen with Youtube videos, ignoring this message is probably fine.)\n" if($down =~ /youtube\.com/i);
+		print "\n";
 		
 		if($remove) {
 			unlink($loc) or die $!;

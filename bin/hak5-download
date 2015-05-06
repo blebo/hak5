@@ -83,7 +83,9 @@ for my $csv (@csv) {
 		#print "@find_loc\n";
 		
 		### Wait, we have more than one copy of the file?!
-		warn @find_loc if(scalar @find_loc > 1);
+		if(scalar @find_loc > 1) {
+			warn "Duplicate File? => @find_loc\n" unless(scalar @find_loc == 2 and $find_loc[0] eq $find_loc[1]);
+		}
 		
 		if(scalar @find_loc == 0) {
 			### Download the file
